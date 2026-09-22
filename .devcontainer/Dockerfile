@@ -1,26 +1,44 @@
-FROM docker:29.7.2-dind
+FROM cruizba/ubuntu-dind:noble-29.7.2
 
-# os setup
-RUN apk add --no-cache bash curl sudo git jq wget
+ENV DEBIAN_FRONTEND=noninteractive \
+    GOLANG_VERSION=1.27.0 \
+    PATH="/usr/local/go/bin:/root/go/bin:${PATH}" \
+    GOPATH=/root/go \
+    EDITOR="code -w"
 
-# k8s setup
-RUN curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 \
-&& install minikube-linux-amd64 /usr/local/bin/minikube \
-&& rm minikube-linux-amd64
+# OS setup
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        bash \
+        curl \
+        sudo \
+        git \
+        jq \
+        wget \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
-&& install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl \
-&& rm kubectl
+# K8s setup
+RUN curl -fsSL -o /tmp/minikube \
+        https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 \
+    && install -o root -g root -m 0755 /tmp/minikube /usr/local/bin/minikube \
+    && rm /tmp/minikube
+
+RUN curl -fsSL -o /tmp/kubectl \
+        "https://dl.k8s.io/release/$(curl -fsSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+    && install -o root -g root -m 0755 /tmp/kubectl /usr/local/bin/kubectl \
+    && rm /tmp/kubectl
 
 # Go setup
-ENV GOLANG_VERSION=1.27.0
-
-RUN wget -q https://go.dev/dl/go${GOLANG_VERSION}.linux-amd64.tar.gz && \
-    tar -C /usr/local -xzf go${GOLANG_VERSION}.linux-amd64.tar.gz && \
-    rm go${GOLANG_VERSION}.linux-amd64.tar.gz
-
-ENV PATH="/usr/local/go/bin:${PATH}"
+RUN wget -q "https://go.dev/dl/go${GOLANG_VERSION}.linux-amd64.tar.gz" \
+    && tar -C /usr/local -xzf "go${GOLANG_VERSION}.linux-amd64.tar.gz" \
+    && rm "go${GOLANG_VERSION}.linux-amd64.tar.gz"
 
 # GO CLIs
-RUN go install github.com/bootdotdev/bootdev@latest && \
-    echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.bashrc
+RUN go install github.com/bootdotdev/bootdev@latest \
+    && echo 'export PATH=$PATH:$HOME/go/bin' >> /root/.bashrc
+
+# Entrypoint
+COPY .devcontainer/cgroup-nesting-entrypoint.sh cgroup-nesting-entrypoint.sh
+ENTRYPOINT [ "./cgroup-nesting-entrypoint.sh" ]
+
+CMD ["sleep", "infinity"]
