@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         bash \
         curl \
         sudo \
+        iproute2 \
+        iputils-ping \
         git \
         jq \
         wget \
