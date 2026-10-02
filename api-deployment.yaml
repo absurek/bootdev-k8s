@@ -17,9 +17,13 @@ spec:
       containers:
         - name: synergychat-api
           image: bootdotdev/synergychat-api:latest
-          env:
-            - name: API_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: synergychat-api-configmap
-                  key: API_PORT
+          envFrom:
+            - configMapRef:
+                name: synergychat-api-configmap
+          volumeMounts:
+            - name: synergychat-api-volume
+              mountPath: /persist
+      volumes:
+        - name: synergychat-api-volume
+          persistentVolumeClaim:
+            claimName: synergychat-api-pvc
