@@ -5,7 +5,6 @@ metadata:
     app: synergychat-web
   name: synergychat-web
 spec:
-  replicas: 3
   selector:
     matchLabels:
       app: synergychat-web
@@ -15,8 +14,8 @@ spec:
         app: synergychat-web
     spec:
       containers:
-      - image: docker.io/bootdotdev/synergychat-web:latest
-        name: synergychat-web
-        envFrom:
+        - image: docker.io/bootdotdev/synergychat-web:latest
+          name: synergychat-web
+          envFrom:
             - configMapRef:
                 name: synergychat-web-configmap
